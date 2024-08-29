@@ -5,6 +5,7 @@ import Loader from "./Loader";
 import ImageGallery from "./ImageGallery";
 import LoadMoreBtn from "./LoadMoreButton";
 import ImageModal from "./ImageModal";
+import ErrorMessage from "./ErrorMessage";
 
 import classes from "./App.module.css";
 
@@ -14,16 +15,19 @@ const App = () => {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleSearchSubmit = async (newQuery) => {
     setQuery(newQuery);
     setCurrentPage(1);
     setImages([]);
+    setError(null);
 
     try {
       await fetchPhotos({ query: newQuery, page: 1 });
     } catch (error) {
       console.error("Error fetching photos:", error);
+      setError("Failed to fetch images. Please try again.");
     }
   };
 
@@ -35,6 +39,7 @@ const App = () => {
       await fetchPhotos({ query, page: nextPage });
     } catch (error) {
       console.error("Error fetching more photos:", error);
+      setError("Failed to fetch images. Please try again.");
     }
   };
 
@@ -50,11 +55,23 @@ const App = () => {
     <div>
       <SearchBar onSubmit={handleSearchSubmit} />
 
-      {query && (
+      {!query && !error && (
+        <div className={classes["search-prompt"]}>
+          <p className={classes.p}>Use search bar to find amazing images :)</p>
+        </div>
+      )}
+
+      {error && <ErrorMessage message={error} />}
+
+      {query && images.length === 0 && !error && (
+        <p className={classes.p}>No images found for `{query}` :(</p>
+      )}
+
+      {query && images.length > 0 && !error && (
         <h1 className={classes.title}>Image Search Results For `{query}`</h1>
       )}
 
-      <ImageGallery images={images} query={query} handleModal={handleModal} />
+      <ImageGallery images={images} handleModal={handleModal} />
 
       {loading && <Loader />}
 
